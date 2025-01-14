@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Export</title>
+    <style>
+        body { 
+            display: flex;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #343a40;
+            color: white;
+            padding: 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 1cm;
+            font-family: Arial, sans-serif;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1.6rem;
+        }
+
+        .sidebar a:hover {
+            background-color: rgb(195, 89, 19);
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+            background-color: #f5f5f5;
+            height: 100%;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ff8c00;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, h2 {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Section -->
+    <div class="sidebar">
+        <a href="/import">Import Data</a> <!-- Added Import Data link -->
+        <a href="/category">Category</a> <!-- Added Category link -->
+        <a href="/">Chart</a>
+        <a href="/export">Export</a>
+    </div>
+
+    <!-- Content Section -->
+    <div class="content">
+        {% if page == "chart" %}
+            <h1>Chart Preview</h1>
+            <img src="data:image/png;base64,{{ chart_image }}" alt="Chart Image">
+            <br>
+            <a href="/export"><button>Export Chart</button></a>
+        {% elif page == "export" %}
+            <h1>Export Chart</h1>
+            <form action="/export" method="POST">
+                <label for="export_type" style="font-size: larger;">Select Export Type:</label>
+                <select name="export_type" id="export_type" required>
+                    <option value="PDF">PDF</option>
+                    <option value="ZIP">ZIP</option>
+                    <option value="Image">Image</option>
+                </select>
+                <br><br>
+                <label for="file_name" style="font-size: larger;">Enter File Name (without extension):</label>
+                <input type="text" name="file_name" id="file_name" required>
+                <br><br>
+                <label for="file_location" style="font-size: larger;">Select Folder:</label>
+                <input type="hidden" name="file_location" id="file_location">
+                <button type="button" onclick="selectFolder()" style="margin-left: 7px;">Select Folder</button>
+                <span id="selected-folder"></span>
+                <br><br>
+                <button type="submit">Save Export</button>
+            </form>
+
+            <!-- Display the success or error message -->
+            {% if message %}
+                <div class="message">{{ message }}</div>
+            {% endif %}
+        {% endif %}
+    </div>
+<script>
+    function selectFolder() {
+        fetch('/select_folder', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.folder_path) {
+                    document.getElementById('file_location').value = data.folder_path;
+                    document.getElementById('selected-folder').innerText = data.folder_path;
+                } else {
+                    const errorMessage = data.error || "No folder selected.";
+                    alert(errorMessage);
+                    document.getElementById('selected-folder').innerText = errorMessage;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred while selecting a folder.");
+            });
+    }
+</script>
+</body>
+</html>
