@@ -14,47 +14,55 @@ app = Flask(__name__)
 
 # Store chart figure in memory
 fig = None
+chart_type = "line"  # Default chart type
 
-@app.route('/chart', methods=['GET'])
+
+@app.route('/')
 def chart():
-    global fig
-    chart_type = request.args.get('chart_type', 'line')  # Default to 'line'
-
+    global fig, chart_type
+    # Example chart data
     data = {
         'data1': [1, 2, 3, 4],
         'data2': [10, 20, 30, 40]
     }
 
+    # Generate chart based on selected type
     fig, ax = plt.subplots()
-
-    if chart_type == 'line':
+    if chart_type == "line":
         ax.plot(data['data1'], label='Data 1')
         ax.plot(data['data2'], label='Data 2')
-    elif chart_type == 'bar':
-        ax.bar(range(len(data['data1'])), data['data1'], label='Data 1')
-        ax.bar(range(len(data['data2'])), data['data2'], label='Data 2')
-    elif chart_type == 'pie':
-        ax.pie(data['data1'], labels=['Data 1'], autopct='%1.1f%%')
-        ax.pie(data['data2'], labels=['Data 2'], autopct='%1.1f%%')
+    elif chart_type == "bar":
+        x = range(len(data['data1']))
+        ax.bar(x, data['data1'], label='Data 1', alpha=0.7)
+        ax.bar(x, data['data2'], label='Data 2', alpha=0.7)
+    elif chart_type == "pie":
+        ax.pie(data['data1'], labels=['A', 'B', 'C', 'D'], autopct='%1.1f%%')
 
-    ax.set_title(f"Example {chart_type.capitalize()} Chart")
-    ax.legend()
+    ax.set_title(f"{chart_type.capitalize()} Chart")
+    if chart_type != "pie":
+        ax.legend()
 
-    # Save chart temporarily in memory (no need to save to disk)
+    # Save chart temporarily in memory
     img_stream = io.BytesIO()
     fig.savefig(img_stream, format='png')
     img_stream.seek(0)
 
     # Encode image as base64 string
     chart_image_base64 = base64.b64encode(img_stream.getvalue()).decode('utf-8')
-    return render_template('index2.html', chart_image=chart_image_base64, page="chart")
+    return render_template('index3.html', chart_image=chart_image_base64, page="chart")
+
+
+@app.route('/category', methods=['POST'])
+def set_chart_type():
+    global chart_type
+    chart_type = request.form.get("chart_type", "line")
+    return jsonify({"status": "success", "chart_type": chart_type})
 
 
 @app.route('/export', methods=['GET', 'POST'])
 def export_chart():
     global fig
     message = None
-    file_path = None
 
     if request.method == 'POST':
         if fig is None:
@@ -64,20 +72,19 @@ def export_chart():
             file_name = request.form['file_name']
             file_location = request.form['file_location']
 
+            # Validate directory path
             if not os.path.isdir(file_location):
                 message = "Invalid directory. Please select or enter a valid directory."
             else:
                 try:
-                    sanitized_file_name = file_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
-
                     if export_type == "PDF":
-                        file_path = os.path.join(file_location, f"{sanitized_file_name}.pdf")
-                        fig.savefig(file_path, format="pdf")
-                        message = f"Chart saved as PDF at {file_path}"
+                        pdf_path = os.path.join(file_location, f"{file_name}.pdf")
+                        fig.savefig(pdf_path, format="pdf")
+                        message = f"Chart saved as PDF at {pdf_path}"
 
                     elif export_type == "ZIP":
-                        zip_path = os.path.join(file_location, f"{sanitized_file_name}.zip")
-                        image_path = os.path.join(file_location, f"{sanitized_file_name}.png")
+                        zip_path = os.path.join(file_location, f"{file_name}.zip")
+                        image_path = os.path.join(file_location, f"{file_name}.png")
 
                         fig.savefig(image_path, format="png")
 
@@ -85,18 +92,17 @@ def export_chart():
                             zipf.write(image_path, os.path.basename(image_path))
                         os.remove(image_path)
 
-                        file_path = zip_path
-                        message = f"Chart saved as ZIP at {file_path}"
+                        message = f"Chart saved as ZIP at {zip_path}"
 
-                    elif export_type == "PNG":
-                        file_path = os.path.join(file_location, f"{sanitized_file_name}.png")
-                        fig.savefig(file_path, format="png")
-                        message = f"Chart saved as Image at {file_path}"
-
+                    elif export_type == "Image":
+                        image_path = os.path.join(file_location, f"{file_name}.png")
+                        fig.savefig(image_path, format="png")
+                        message = f"Chart saved as Image at {image_path}"
                 except Exception as e:
                     message = f"Error saving file: {str(e)}"
 
-    return jsonify({'message': message, 'file_path': file_path})
+    return render_template('index3.html', page="export", message=message)
+
 
 @app.route('/select_folder', methods=['POST'])
 def select_folder():
@@ -124,6 +130,5 @@ def select_folder():
         return jsonify({'folder_path': None, 'error': str(e)})
 
 
-# Ensure that the Flask app is running correctly
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
