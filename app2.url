@@ -1,5 +1,2 @@
-Step 4: Test the URL Path
-Test whether the routes are correctly defined by manually visiting the following URLs:
-
 http://127.0.0.1:5000/chart
 http://127.0.0.1:5000/export
