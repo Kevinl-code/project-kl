@@ -1,23 +1,18 @@
-import matplotlib
-matplotlib.use('Agg')  # Use Agg backend for non-GUI support
-
-from flask import Flask, render_template, request, jsonify
-import os
+from flask import Flask, render_template, request, jsonify, session
 import matplotlib.pyplot as plt
-import zipfile
 import io
 import base64
+import os
+import zipfile
 import subprocess
-import json
+import shutil
 
-app = Flask(__name__)
 
-# Store chart figure in memory
-fig = None
+app = Flask(__name__)  # Define the Flask app object
+app.secret_key = 'your_secret_key'  # Needed for using session
 
 @app.route('/chart', methods=['GET'])
 def chart():
-    global fig
     chart_type = request.args.get('chart_type', 'line')  # Default to 'line'
 
     data = {
@@ -40,63 +35,71 @@ def chart():
     ax.set_title(f"Example {chart_type.capitalize()} Chart")
     ax.legend()
 
-    # Save chart temporarily in memory (no need to save to disk)
+    # Save chart as a temporary image
     img_stream = io.BytesIO()
     fig.savefig(img_stream, format='png')
     img_stream.seek(0)
 
-    # Encode image as base64 string
-    chart_image_base64 = base64.b64encode(img_stream.getvalue()).decode('utf-8')
-    return render_template('index2.html', chart_image=chart_image_base64, page="chart")
+    # Save the image temporarily
+    temp_img_path = 'static/temp_chart.png'
+    with open(temp_img_path, 'wb') as f:
+        f.write(img_stream.read())
 
+    # Store the image path in session
+    session['chart_image_path'] = temp_img_path
+
+    # Convert to base64 for display
+    chart_image_base64 = base64.b64encode(img_stream.getvalue()).decode('utf-8')
+
+    return render_template('index2.html', chart_image=chart_image_base64, page="chart")
 
 @app.route('/export', methods=['GET', 'POST'])
 def export_chart():
-    global fig
+    # Retrieve chart image path from session
+    chart_image_path = session.get('chart_image_path', None)
+    if not chart_image_path:
+        return jsonify({'message': "No chart found. Please generate a chart first.", 'file_path': None})
+
     message = None
     file_path = None
 
     if request.method == 'POST':
-        if fig is None:
-            message = "No chart found. Please generate a chart first."
+        export_type = request.form['export_type']
+        file_name = request.form['file_name']
+        file_location = request.form['file_location']
+
+        # Check if the selected folder is valid
+        if not os.path.isdir(file_location):
+            message = "Invalid directory. Please select or enter a valid directory."
         else:
-            export_type = request.form['export_type']
-            file_name = request.form['file_name']
-            file_location = request.form['file_location']
+            try:
+                sanitized_file_name = file_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
 
-            if not os.path.isdir(file_location):
-                message = "Invalid directory. Please select or enter a valid directory."
-            else:
-                try:
-                    sanitized_file_name = file_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+                # Export PNG
+                if export_type == "PNG":
+                    file_path = os.path.join(file_location, f"{sanitized_file_name}.png")
+                    shutil.copy(chart_image_path, file_path)  # Copy the temp chart to the selected folder
+                    message = f"Chart saved as Image at {file_path}"
 
-                    if export_type == "PDF":
-                        file_path = os.path.join(file_location, f"{sanitized_file_name}.pdf")
-                        fig.savefig(file_path, format="pdf")
-                        message = f"Chart saved as PDF at {file_path}"
+                # Export PDF
+                elif export_type == "PDF":
+                    file_path = os.path.join(file_location, f"{sanitized_file_name}.pdf")
+                    fig.savefig(file_path, format="pdf")
+                    message = f"Chart saved as PDF at {file_path}"
 
-                    elif export_type == "ZIP":
-                        zip_path = os.path.join(file_location, f"{sanitized_file_name}.zip")
-                        image_path = os.path.join(file_location, f"{sanitized_file_name}.png")
+                # Export ZIP
+                elif export_type == "ZIP":
+                    zip_path = os.path.join(file_location, f"{sanitized_file_name}.zip")
+                    with zipfile.ZipFile(zip_path, 'w') as zipf:
+                        zipf.write(chart_image_path, os.path.basename(chart_image_path))  # Add the image to the ZIP
+                    file_path = zip_path
+                    message = f"Chart saved as ZIP at {file_path}"
 
-                        fig.savefig(image_path, format="png")
-
-                        with zipfile.ZipFile(zip_path, 'w') as zipf:
-                            zipf.write(image_path, os.path.basename(image_path))
-                        os.remove(image_path)
-
-                        file_path = zip_path
-                        message = f"Chart saved as ZIP at {file_path}"
-
-                    elif export_type == "PNG":
-                        file_path = os.path.join(file_location, f"{sanitized_file_name}.png")
-                        fig.savefig(file_path, format="png")
-                        message = f"Chart saved as Image at {file_path}"
-
-                except Exception as e:
-                    message = f"Error saving file: {str(e)}"
+            except Exception as e:
+                message = f"Error saving file: {str(e)}"
 
     return jsonify({'message': message, 'file_path': file_path})
+
 
 @app.route('/select_folder', methods=['POST'])
 def select_folder():
@@ -122,8 +125,5 @@ def select_folder():
             return jsonify({'folder_path': None, 'error': error_message})
     except Exception as e:
         return jsonify({'folder_path': None, 'error': str(e)})
-
-
-# Ensure that the Flask app is running correctly
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

@@ -5,11 +5,10 @@
     <title>Chart Export</title>
     <style>
         body {
-            display: flex;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            overflow: hidden;
+            font-family: Arial, sans-serif;
+
         }
 
         .sidebar {
@@ -21,7 +20,7 @@
             background-color: #343a40;
             color: white;
             padding: 0;
-            display: flex;
+            display: none;
             flex-direction: column;
             gap: 1cm;
             font-family: Arial, sans-serif;
@@ -44,9 +43,38 @@
         .content {
             margin-left: 250px;
             padding: 20px;
+            display: none;
             width: calc(100% - 250px);
             background-color: #f5f5f5;
             height: 100%;
+        }
+        .front-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        .front-page h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .front-page button {
+            padding: 10px 20px;
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .front-page button:hover {
+            background-color: #ff8c00;
         }
 
         button {
@@ -84,8 +112,14 @@
     </style>
 </head>
 <body>
+     <!-- Front Page Section -->
+     <div class="front-page" id="front-page">
+        <h1>Comprehension Data Visualization of Recent Trends in CS</h1>
+        <button id="get-started-button">Get Started</button>
+    </div>
+
     <!-- Sidebar Section -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <a onclick="navigateTo('import')">Import Data</a>
         <a onclick="navigateTo('category')">Category</a>
         <a onclick="navigateTo('chart')">Chart</a>
@@ -93,12 +127,19 @@
     </div>
 
     <!-- Content Section -->
-    <div class="content" id="content">
+    <div class="content" id="content"></div>
 
     <script>
         let importedTableNames = [];
-
-function navigateTo(page) {
+            // Front Page Navigation
+            document.getElementById('get-started-button').addEventListener('click', () => {
+            document.getElementById('front-page').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'flex';
+            document.getElementById('content').style.display = 'block';
+            navigateTo('import');
+        });
+    
+    function navigateTo(page) {
     const content = document.getElementById('content');
     if (page === 'import') {
         content.innerHTML = `
@@ -194,9 +235,10 @@ function navigateTo(page) {
                 <br><br>
                 <button type="submit">Save Export</button></form>
                 `;
+                attachExportEventHandlers();
+
     }
 }
-
 function attachImportEventHandlers() {
     const importButton = document.getElementById('import-button');
     const startImportButton = document.getElementById('start-import-button');
@@ -267,6 +309,32 @@ function attachCategoryEventHandlers() {
         navigateTo('chart', { chartType });
     });
 }
+function attachExportEventHandlers() {
+            const exportForm = document.getElementById('exportForm');
+            exportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(exportForm);
+
+                try {
+                    const response = await fetch('/export', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    const result = await response.json();
+
+                    if (result.message) {
+                        alert(result.message);
+                        if (result.location) {
+                            alert(`The file has been saved at: ${result.location}`);
+                        }
+                    }
+                } catch (error) {
+                    alert('An error occurred while exporting the chart.');
+                    console.error(error);
+                }
+            });
+        }
 
 function selectFolder() {
     fetch('/select_folder', { method: 'POST' })
