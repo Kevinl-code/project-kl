@@ -162,57 +162,68 @@
     } else if (page === 'category') {
     content.innerHTML = `
         <h1>Category Management</h1>
-        <form>
-            <label for="table_dropdown" style="font-size: larger;">Select Table:</label>
-            <select id="table_dropdown" style="padding-right: 50px;padding-bottom: 2px;padding-left: 50px;padding-top: 4px;">
-                ${importedTableNames.map(table => `<option value="${table}">${table}</option>`).join('')}
-            </select>
-            <br><br>
-            <label style="font-size: larger;">Select Year(s):</label>
-            <div style="width: 800px;height: 119px;padding-top: 6px;padding-bottom: -;border-bottom-width: 8px;border-top-width: 9px;margin-bottom: 0px;">
-                <input type="checkbox" id="all_years" name="year" value="all_years"> All Years<br>
-                <input type="checkbox" class="year-option" name="year" value="2023" style="margin-top: 15px;margin-bottom: 5px;"> 2023<br>
-                <input type="checkbox" class="year-option" name="year" value="2024" style="margin-top: 15px;margin-bottom: 5px;"> 2024<br>
-                <input type="checkbox" class="year-option" name="year" value="2025" style="margin-top: 15px;"> 2025<br>
-            </div>
-            <br>
-            <label for="chart_type" style="font-size: larger;">Select Chart Type:</label>
-            <select id="chart_type" style="padding-right: 60px;padding-left: 60px;padding-bottom: 5px;padding-top: 5px;margin-left: 5px;">
-                <option value="line">Line</option>
-                <option value="bar">Bar</option>
-                <option value="pie">Pie</option>
-            </select>
-            <br><br>
-            <label for="x_axis" style="font-size: larger;margin-top: 10px;padding-top: 40px;">Select X Axis:</label>
-            <select id="x_axis" style="padding-right: 60px;padding-left: 60px;padding-bottom: 5px;padding-top: 5px;margin-left: 5px;">
-                <option value="op">op</option>
-                <option value="mp">mp</option>
-                <option value="lp">lp</option>
-            </select>
-            <br><br>
-            <label for="y_axis" style="font-size: larger;">Select Y Axis:</label>
-            <select id="y_axis" style="padding-right: 60px;padding-left: 60px;padding-top: 5px;padding-bottom: 5px;margin-left: 5px;">
-                <option value="op">op</option>
-                <option value="mp">mp</option>
-                <option value="lp">lp</option>
-            </select>
-            <br><br>
-            <label for="color_picker" style="font-size: larger;">Select Color:</label>
-            <input type="color" id="color_picker" style="padding-right: 50px;padding-left: 40px;padding-top: 20px;margin-left: 5px;">
-            <br><br>
-            <input type="checkbox" id="grid_checkbox" style="width: 20px;height: 20px;margin-right: 5px;margin-top: 1px;margin-bottom: 1px;"> Show Grid
-            <br><br>
-            <button type="button" id="generate_chart_button">Generate Chart</button>
-        </form>
+    <form>
+        <label for="table_dropdown" style="font-size: larger;">Select Table:</label>
+        <select id="table_dropdown" style="padding: 5px;">
+            ${importedTableNames.map(table => `<option value="${table}">${table}</option>`).join('')}
+        </select>
+        <br><br>
+        
+        <label style="font-size: larger;">Select Year(s):</label>
+        <div>
+            <input type="checkbox" id="all_years" name="year" value="all_years"> All Years<br>
+            <input type="checkbox" class="year-option" name="year" value="2023"> 2023<br>
+            <input type="checkbox" class="year-option" name="year" value="2024"> 2024<br>
+            <input type="checkbox" class="year-option" name="year" value="2025"> 2025<br>
+        </div>
+        <br>
+        
+        <label for="chart_type" style="font-size: larger;">Select Chart Type:</label>
+        <select id="chart_type" style="padding: 5px;">
+            <option value="line">Line</option>
+            <option value="bar">Bar</option>
+            <option value="pie">Pie</option>
+        </select>
+        <span id="selected_chart_type" style="font-weight: bold; margin-left: 10px;"></span>
+        <br><br>
+        
+        <label for="x_axis" style="font-size: larger;">Select X Axis:</label>
+        <select id="x_axis" style="padding: 5px;">
+            <option value="op">op</option>
+            <option value="mp">mp</option>
+            <option value="lp">lp</option>
+        </select>
+        <br><br>
+        
+        <label for="y_axis" style="font-size: larger;">Select Y Axis:</label>
+        <select id="y_axis" style="padding: 5px;">
+            <option value="op">op</option>
+            <option value="mp">mp</option>
+            <option value="lp">lp</option>
+        </select>
+        <br><br>
+        
+        <label for="color_picker" style="font-size: larger;">Select Color:</label>
+        <input type="color" id="color_picker">
+        <span id="selected_color" style="font-weight: bold; margin-left: 10px;"></span>
+        <br><br>
+        
+        <input type="checkbox" id="grid_checkbox"> Show Grid
+        <br><br>
+        
+        <button type="button" id="generate_chart_button">Generate Chart</button>
+    </form>
     `;
     attachCategoryEventHandlers();
 
     } else if (page === 'chart') {
         content.innerHTML = `
-            <h1>Chart Preview</h1>
-            <img src="data:image/png;base64,{{ chart_image }}" alt="Chart Image">
-            <br>
-            <button onclick="navigateTo('export')">Export Chart</button>
+    <h1>Chart Preview</h1>
+    <label style="font-size: larger;">Selected Chart Type: <span id="display_chart_type" style="font-weight: bold;"></span></label>
+    <br>
+    <img src="data:image/png;base64,{{ chart_image }}" alt="Chart Image">
+    <br>
+    <button onclick="navigateTo('export')">Export Chart</button>
         `;
     } else if (page === 'export') {
         content.innerHTML = `
@@ -238,7 +249,13 @@
                 attachExportEventHandlers();
 
     }
-}
+}document.addEventListener('DOMContentLoaded', function () {
+    attachImportEventHandlers();
+    attachCategoryEventHandlers();
+    attachExportEventHandlers();
+    attachChartEventHandlers();
+});
+
 function attachImportEventHandlers() {
     const importButton = document.getElementById('import-button');
     const startImportButton = document.getElementById('start-import-button');
@@ -258,7 +275,6 @@ function attachImportEventHandlers() {
         if (!tableName) {
             alert("Please enter a table name.");
         } else {
-            // Save the table name to the dropdown list
             importedTableNames.push(tableName);
             alert("Data imported successfully.");
             navigateTo('category');
@@ -275,118 +291,40 @@ function attachCategoryEventHandlers() {
     const generateChartButton = document.getElementById('generate_chart_button');
 
     allYearsCheckbox.addEventListener('change', () => {
-        if (allYearsCheckbox.checked) {
-            yearOptions.forEach(option => option.disabled = true);
-        } else {
-            yearOptions.forEach(option => option.disabled = false);
-        }
+        yearOptions.forEach(option => option.disabled = allYearsCheckbox.checked);
     });
 
     yearOptions.forEach(option => {
         option.addEventListener('change', () => {
-            if (Array.from(yearOptions).some(opt => opt.checked)) {
-                allYearsCheckbox.checked = false;
-            }
+            allYearsCheckbox.checked = !Array.from(yearOptions).some(opt => opt.checked);
         });
     });
 
-    xAxisDropdown.addEventListener('change', () => {
-        const selectedValue = xAxisDropdown.value;
-        Array.from(yAxisDropdown.options).forEach(option => {
-            option.disabled = option.value === selectedValue;
-        });
-    });
-
-    yAxisDropdown.addEventListener('change', () => {
-        const selectedValue = yAxisDropdown.value;
-        Array.from(xAxisDropdown.options).forEach(option => {
-            option.disabled = option.value === selectedValue;
+    [xAxisDropdown, yAxisDropdown].forEach(dropdown => {
+        dropdown.addEventListener('change', () => {
+            const xValue = xAxisDropdown.value;
+            const yValue = yAxisDropdown.value;
+            Array.from(xAxisDropdown.options).forEach(option => option.disabled = option.value === yValue);
+            Array.from(yAxisDropdown.options).forEach(option => option.disabled = option.value === xValue);
         });
     });
 
     generateChartButton.addEventListener('click', () => {
-        const chartType = chartTypeDropdown.value;
-        navigateTo('chart', { chartType });
+        const chartTypeText = chartTypeDropdown.options[chartTypeDropdown.selectedIndex].text;
+        localStorage.setItem('selectedChartType', chartTypeText); // Store chart type
+        navigateTo('chart', { chartType: chartTypeText });
     });
 }
+
 function attachExportEventHandlers() {
-            const exportForm = document.getElementById('exportForm');
-            exportForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(exportForm);
-
-                try {
-                    const response = await fetch('/export', {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    const result = await response.json();
-
-                    if (result.message) {
-                        alert(result.message);
-                        if (result.location) {
-                            alert(`The file has been saved at: ${result.location}`);
-                        }
-                    }
-                } catch (error) {
-                    alert('An error occurred while exporting the chart.');
-                    console.error(error);
-                }
-            });
-        }
-
-function selectFolder() {
-    fetch('/select_folder', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-            if (data.folder_path) {
-                document.getElementById('file_location').value = data.folder_path;
-                document.getElementById('selected-folder').innerText = data.folder_path;
-            } else {
-                const errorMessage = data.error || "No folder selected.";
-                alert(errorMessage);
-                document.getElementById('selected-folder').innerText = errorMessage;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("An error occurred while selecting a folder.");
-        });
-}
- async function exportChart(event) {
-            event.preventDefault(); // Prevent default form submission behavior
-            const form = event.target;
-
-            // Gather form data
-            const formData = new FormData(form);
-
-            // Make a POST request to the /export endpoint
-            const response = await fetch('/export', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            // Display a message based on the result
-            if (result.success) {
-                alert(`Success: ${result.message}`);
-            } else {
-                alert(`Error: ${result.message}`);
-            }
-        }
-        document.getElementById('exportForm').addEventListener('submit', async function (e) {
-        e.preventDefault(); // Prevent the form from submitting normally
-
-        const formData = new FormData(this);
+    const exportForm = document.getElementById('exportForm');
+    
+    exportForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(exportForm);
 
         try {
-            const response = await fetch('/export', {
-                method: 'POST',
-                body: formData,
-            });
-
+            const response = await fetch('/export', { method: 'POST', body: formData });
             const result = await response.json();
 
             if (result.message) {
@@ -400,24 +338,69 @@ function selectFolder() {
             console.error(error);
         }
     });
-    $(document).ready(function() {
-            $('#exportForm').on('submit', function(e) {
-                e.preventDefault(); // Prevent the default form submission
 
-                $.ajax({
-                    url: '/export',
-                    method: 'POST',
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        // Show an alert dialog with the message and file path
-                        alert(response.message + "\nFile Path: " + response.file_path);
-                    },
-                    error: function(xhr, status, error) {
-                        alert("An error occurred: " + error);
-                    }
-                });
-            });
+    $('#exportForm').on('submit', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '/export',
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function (response) {
+                alert(response.message + "\nFile Path: " + response.file_path);
+            },
+            error: function (xhr, status, error) {
+                alert("An error occurred: " + error);
+            }
         });
+    });
+}
+
+function selectFolder() {
+    fetch('/select_folder', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.folder_path) {
+                document.getElementById('file_location').value = data.folder_path;
+                document.getElementById('selected-folder').innerText = data.folder_path;
+            } else {
+                alert(data.error || "No folder selected.");
+                document.getElementById('selected-folder').innerText = data.error || "No folder selected.";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("An error occurred while selecting a folder.");
+        });
+}
+
+function attachChartEventHandlers() {
+    const chartTypeDropdown = document.getElementById('chart_type');
+    const selectedChartTypeLabel = document.getElementById('selected_chart_type');
+    const generateChartButton = document.getElementById('generate_chart_button');
+
+    chartTypeDropdown.addEventListener('change', function () {
+        selectedChartTypeLabel.innerText = this.options[this.selectedIndex].text;
+    });
+
+    document.getElementById('color_picker').addEventListener('change', function () {
+        document.getElementById('selected_color').innerText = this.value;
+    });
+
+    generateChartButton.addEventListener('click', function () {
+        const selectedChartType = chartTypeDropdown.options[chartTypeDropdown.selectedIndex].text;
+        localStorage.setItem('selectedChartType', selectedChartType); // Store for chart page
+        document.getElementById('display_chart_type').innerText = selectedChartType;
+        navigateTo('chart');
+    });
+
+    // Retrieve and display selected chart type on chart page
+    const savedChartType = localStorage.getItem('selectedChartType');
+    if (savedChartType) {
+        document.getElementById('display_chart_type').innerText = savedChartType;
+    }
+}
+        
     </script>
 </body>
 </html>
