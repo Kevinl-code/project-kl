@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <br>
+        <a href="#" onclick="showContent('import')">Import Data</a>
+        <a href="#" onclick="showContent('category')">Category</a>
+        <a href="#" onclick="showContent('charts')">Charts</a>
+        <a href="#" onclick="showContent('export')">Export</a>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="import-content">
+        <h2>Import Data</h2>
+        <input type="file" accept=".xlsx" id="file-uploader">
+        <button id="import-data-btn">Import Data</button>
+
+        <!-- Hidden until "Import Data" is clicked -->
+        <div id="table-name-container" style="display: none; margin-top: 20px;">
+            <input type="text" id="table-name" placeholder="Enter table name">
+            <button id="start-import-btn">Start Import</button>
+        </div>
+    </div>
+
+    <div class="content" id="category-content">
+        <h2>Category</h2>
+    </div>
+
+    <div class="content" id="charts-content">
+        <h2>Charts</h2>
+    </div>
+
+    <div class="content" id="export-content">
+        <h2>Export</h2>
+    </div>
+
+    <script>
+        // Show sidebar and content when the page loads
+        document.querySelector('.sidebar').style.display = 'flex';
+        document.querySelector('.content').style.display = 'block';
+
+        // Function to show specific content
+        function showContent(page) {
+            const contents = document.querySelectorAll('.content');
+            contents.forEach(content => content.style.display = 'none');
+            document.getElementById(`${page}-content`).style.display = 'block';
+        }
+
+        // Show "Import Data" by default
+        window.onload = () => showContent('import');
+
+        // Import Data Button Click Event
+        document.getElementById('import-data-btn').addEventListener('click', () => {
+            const fileUploader = document.getElementById('file-uploader');
+            if (!fileUploader.files.length) {
+                alert('Please upload an XLSX file first.');
+                return;
+            }
+            document.getElementById('table-name-container').style.display = 'block';
+        });
+   // Start Import Button Click Event
+    document.getElementById('start-import-btn').addEventListener('click', async () => {
+        const tableName = document.getElementById('table-name').value.trim();
+        const file = document.getElementById('file-uploader').files[0];
+
+        if (!tableName || !file) {
+            alert('Please provide both file and table name.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('table_name', tableName);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message); // Show success dialog
+                showContent('category'); // Navigate to Category page
+            } else {
+                alert(result.message); // Show error message
+            }
+        } catch (error) {
+            alert('An error occurred while importing data.');
+        }
+    });
+</script>
+    </script>
+</body>
+</html>

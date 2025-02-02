@@ -1,0 +1,45 @@
+﻿Sheet1
+
+
+ CREATE TABLE sheet1 (
+Years INT,
+Title_of_the_Course VARCHAR,
+Course_Code VARCHAR,
+Title_of_the_Content VARCHAR,
+Nature_of_e_content TEXT,
+Department TEXT
+);
+
+
+
+
+
+
+Sheet2
+
+
+CREATE TABLE sheet2 (
+    Year INT,
+    "Name_of_the_Faculty" VARCHAR(100),
+    "Title_of_the_Talk" VARCHAR(80),
+    Nature TEXT CHECK(Nature IN ('R','N')),
+    "Type_of_Programme" TEXT CHECK("Type_of_Programme" IN('W','S','Other','O','F')),
+    "Title_of_the_Seminar" VARCHAR(90),
+    "Institution_and_Place" VARCHAR(90),
+    "Date" DATE
+);
+
+
+Sheet3
+
+
+CREATE TABLE sheet3 (
+    Year INT,
+    "Name_of_the_Faculty" VARCHAR(23),
+    Nature TEXT CHECK(Nature IN ('IN', 'N', 'R')),
+    "Type_of_Programme" TEXT CHECK("Type_of_Programme" IN ('FDP','Webinar','Conf', 'WS','FIP')),
+    "Name_of_the_Programme" VARCHAR(108),
+    "Name_and_Place_of_the_Institution" VARCHAR(89),
+    "Date" DATE,
+    "Duration_in_Days" INT
+);
